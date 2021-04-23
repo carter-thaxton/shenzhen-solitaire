@@ -1,4 +1,4 @@
-TARGET_EXEC ?= solitaire
+TARGET ?= solitaire
 
 BUILD_DIR ?= ./build
 SRC_DIRS ?= ./src
@@ -13,7 +13,7 @@ INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 CPPFLAGS ?= $(INC_FLAGS) -MMD -MP
 LDFLAGS ?= -lstdc++
 
-$(BUILD_DIR)/$(TARGET_EXEC): $(OBJS)
+$(TARGET): $(OBJS)
 	$(CC) $(OBJS) -o $@ $(LDFLAGS)
 
 # assembly
@@ -35,7 +35,7 @@ $(BUILD_DIR)/%.cpp.o: %.cpp
 .PHONY: clean
 
 clean:
-	$(RM) -r $(BUILD_DIR)
+	$(RM) -rf $(BUILD_DIR) $(TARGET)
 
 -include $(DEPS)
 
