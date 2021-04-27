@@ -82,7 +82,7 @@ ostream& operator<<(ostream& os, const GameState& game) {
   os << "+"; for (int p=0; p < num_piles; p++) { os << "-"; } os << "+"; os << endl;
 
   os << "|";
-  for (int i=0; i < num_suits; i++) {
+  for (int i=num_suits-1; i >= 0; i--) {
     os << game.slots[i];
   }
 
@@ -144,7 +144,7 @@ Card::Card(int suit, int value) : suit(suit), value(value) {
 }
 
 bool Card::present() const {
-  return (suit != 0) && (value != 0);
+  return (suit != 0) || (value != 0);
 }
 
 bool Card::dragon() const {
@@ -359,14 +359,15 @@ void GameState::make_move(const Move &move) {
       int value = slots[s].value;
       if (suit < 0) {
         blank_done += 1;
+        slots[s] = no_card;
       } else if (value < 0) {
         // move multiple dragons to done
         move_dragons_to_done(*this, suit);
       } else {
         // normal card to done - update value of top card in done pile
         done[suit] = value;
+        slots[s] = no_card;
       }
-      slots[s] = no_card;
     } else if (to < 0) {
       // slot to slot
       if (from != to) {
@@ -393,15 +394,17 @@ void GameState::make_move(const Move &move) {
       if (suit < 0) {
         // blank card done
         blank_done += 1;
+        piles[from][h] = no_card;
+        pile_sizes[from]--;
       } else if (value < 0) {
         // move multiple dragons to done
         move_dragons_to_done(*this, suit);
       } else {
         // normal card to done - update value of top card in done pile
         done[suit] = value;
+        piles[from][h] = no_card;
+        pile_sizes[from]--;
       }
-      piles[from][h] = no_card;
-      pile_sizes[from]--;
     } else if (to < 0) {
       // pile to slot
       int s = -to-1;
@@ -411,18 +414,18 @@ void GameState::make_move(const Move &move) {
       pile_sizes[from]--;
     } else {
       // pile to pile  (moving size cards)
-      int from_h = pile_sizes[from];
-      int to_h = pile_sizes[to];
       int size = move.size;
-      while (size > 0) {
-        from_h--;
-        to_h--;
-        size--;
-        piles[to][to_h] = piles[from][from_h];
-        piles[from][from_h] = no_card;
-      }
+      int from_h = pile_sizes[from] - size;
+      int to_h = pile_sizes[to];
       pile_sizes[from] -= size;
       pile_sizes[to] += size;
+      while (size > 0) {
+        piles[to][to_h] = piles[from][from_h];
+        piles[from][from_h] = no_card;
+        from_h++;
+        to_h++;
+        size--;
+      }
     }
   }
 }
@@ -451,8 +454,20 @@ static bool can_move_dragon_to_done(const GameState &game, int suit) {
   return (free_slots > 0) && (dragons_showing == num_dragons);
 }
 
-static bool can_move_normal_to_done(const GameState &game, int suit, int value) {
-  return game.done[suit] == (value - 1);
+static bool can_move_normal_to_done(const GameState &game, int suit, int value, bool implicit) {
+  if (game.done[suit] != (value - 1))
+    return false;
+
+  // implicit moves to done are only performed when they don't exceed the other done piles by one
+  if (implicit) {
+    for (int i=0; i < num_suits; i++) {
+      if (game.done[i] < (value - 1)) {
+        return false;
+      }
+    }
+  }
+
+  return true;
 }
 
 static bool can_move_card_onto_card(const Card &card, const Card &onto_card) {
@@ -481,16 +496,16 @@ std::tuple<bool,bool> GameState::check_move(const Move &move) const {
     if (size != 1) return {false, false};  // only ever move one card at a time to done
     if (from < 0) {
       // slot to done
-      if (implicit) return {false, false};
       int from_slot = -from-1;
       auto card = slots[from_slot];
       if (!card.present()) return {false, false};
       if (card.dragon()) {
         // dragon to done
+        if (implicit) return {false, false};
         return {can_move_dragon_to_done(*this, card.suit), false};
       } else {
         // normal to done
-        return {can_move_normal_to_done(*this, card.suit, card.value), false};
+        return {can_move_normal_to_done(*this, card.suit, card.value, implicit), false};
       }
     } else {
       // pile to done
@@ -502,10 +517,11 @@ std::tuple<bool,bool> GameState::check_move(const Move &move) const {
         return {true, false};    // always legal  (should always be implicit, too)
       } else if (card.dragon()) {
         // dragon to done
+        if (implicit) return {false, false};
         return {can_move_dragon_to_done(*this, card.suit), false};
       } else {
         // normal to done
-        return {can_move_normal_to_done(*this, card.suit, card.value), false};
+        return {can_move_normal_to_done(*this, card.suit, card.value, implicit), false};
       }
     }
   } else if (to < 0) {
@@ -536,6 +552,7 @@ std::tuple<bool,bool> GameState::check_move(const Move &move) const {
     // size can be 1 or more.  check the bottom card of the given stack
     if (size < 1) return {false, false};
     int h = pile_sizes[from]-size;
+    if (h < 0) return {false, false};
     auto card = piles[from][h];
 
     bool legal = can_move_card_onto_card(card, onto_card);
@@ -554,49 +571,71 @@ bool solve_game(const GameState &game, vector<Move> &moves_to_win, unordered_set
   if (game.win())
     return true;
 
-  // DEBUG: stop after N visits
-  if (visited_states.size() >= 10)
-    return false;
-  if (depth >= 10)
-    return false;
-
   // Check if we have already visited this state, to avoid loops
-  if (visited_states.find(game) != visited_states.end())
+  if (visited_states.find(game) != visited_states.end()) {
+//    cout << "Already visited state" << endl;
     return false;
+  }
 
   visited_states.insert(game);
 
+  // DEBUG: stop after N visits
+  if (visited_states.size() >= 10000000)
+    return false;
+  if (depth >= 500)
+    return false;
+//  cout << std::string(depth, ' ');
+//  cout << "Visited: " << visited_states.size() << "   Depth: " << depth << endl;
+
+
   bool implicit = true;
   int from = -num_suits;
-  int to = -num_suits;
+  int to = move_to_done;
   int size = 1;
+
+  int move_count = 0;
 
   // Try each next move in turn
   while (1) {
     Move move(from, to, size, implicit);
 
+    bool debug = false;
+    if (false) { //(visited_states.size() == 739) && (depth == 276) && (from == 0) && (to == move_to_done)) {
+      debug = true;
+      cout << "DEBUGGING:  " << visited_states.size() << "," << depth << endl;
+      cout << move << endl;
+    }
+
     // Check if move is legal, and whether we should also check further stack sizes
     auto [legal, try_next_size] = game.check_move(move);
 
+    if (debug) {
+      cout << "legal: " << legal << "   next_size: " << try_next_size << endl;
+    }
+
     // Iterate through each move one at a time, first checking all implicit moves
+    // from:  slots, piles
+    // to:    done, piles, slots
     if (try_next_size) {
       size += 1;
     } else if (to == move_to_done) {
+      to = 0;
+      size = 1;
+    } else if (to >= num_piles-1) {
       to = -num_suits;
+      size = 1;
+    } else if (to == -1) {
       from += 1;
+      to = move_to_done;
       size = 1;
       if (from >= num_piles) {
         if (implicit) {
           implicit = false;
           from = -num_suits;
-          to = -num_suits;
         }
         else
           break;  // done looping
       }
-    } else if (to >= num_piles-1) {
-      to = move_to_done;
-      size = 1;
     } else {
       to += 1;
       size = 1;
@@ -606,14 +645,30 @@ bool solve_game(const GameState &game, vector<Move> &moves_to_win, unordered_set
     if (!legal)
       continue;
 
-    cout << "Visited: " << visited_states.size() << "    Making move: " << move << endl;
-    cout << "Before:" << endl << game << endl;
+    move_count++;
+    if (debug) {
+      cout << move << endl;
+      cout << "Before:" << endl << game << endl;
+    }
 
     // Make the move on a copy of the game state
     GameState next_state = game;
     next_state.make_move(move);
 
-    cout << "After:" << endl << next_state << endl;
+    for (int i=0; i < num_piles; i++) {
+      if (next_state.pile_sizes[i] < 0) {
+        cout << "BAD STATE   " << visited_states.size() << "," << depth << endl;
+        cout << game << endl;
+        cout << move << endl;
+        cout << next_state << endl;
+        cout << endl;
+      }
+    }
+
+
+    if (debug) {
+      cout << "After:" << endl << next_state << endl;
+    }
 
     // Recursively check the state after making this move
     bool wins = solve_game(next_state, moves_to_win, visited_states, depth+1);
@@ -628,8 +683,12 @@ bool solve_game(const GameState &game, vector<Move> &moves_to_win, unordered_set
     }
   }
 
-  cout << "No legal moves from state: " << endl;
-  cout << game << endl;
+  if (move_count == 0) {
+    cout << "No legal moves from state: " << visited_states.size() << "," << depth << endl;
+    cout << game << endl;
+  } else {
+    //cout << "No winning moves found at: " << visited_states.size() << "," << depth << endl;
+  }
 
   // No more legal moves, or all legal moves from this state result in a loss
   return false;

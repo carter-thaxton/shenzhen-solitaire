@@ -1,0 +1,14 @@
+{
+    "makefile.extensionOutputFolder": "./.vscode",
+    "makefile.launchConfigurations": [
+        {
+            "cwd": "${workspaceFolder}",
+            "binaryPath": "${workspaceFolder}/solitaire",
+            "binaryArgs": []
+        }
+    ],
+    "files.associations": {
+        "unordered_set": "cpp",
+        "ostream": "cpp"
+    }
+}

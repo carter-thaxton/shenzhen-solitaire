@@ -15,6 +15,7 @@ void init_random_seed() {
 int main(int argc, const char *argv[]) {
 //  init_random_seed();
 //  srand(0);
+  srand(0);
 
   GameState game = GameState::create_random();
 
