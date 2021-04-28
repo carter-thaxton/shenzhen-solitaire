@@ -4,6 +4,9 @@
 #include <vector>
 #include <unordered_set>
 
+#include "card.h"
+#include "move.h"
+
 using namespace std;
 
 const int num_suits = 3;
@@ -16,35 +19,6 @@ const int init_pile_size = ((max_value * num_suits) + (num_dragons * num_suits) 
 const int max_pile_size = init_pile_size + (max_value - 2);
 const int move_to_done = -999;
 
-class Card {
-public:
-  Card();
-  Card(int suit, int value);
-
-  int suit;
-  int value;
-
-  bool present() const;
-  bool dragon() const;
-  bool blank() const;
-  bool normal() const;
-
-  friend ostream& operator<<(ostream& os, const Card& card);
-  friend bool operator==(const Card &c1, const Card &c2);
-  friend bool operator!=(const Card &c1, const Card &c2);
-};
-
-class Move {
-public:
-  Move(int from, int to, int size = 1, bool implicit = 1);
-
-  int from;  // non-negative indicates a pile, negative indicates a slot
-  int to;    // non-negative indicates a pile, negative indicates a slot, -999 indicates move to done
-  int size;  // how many cards to move as a stack
-  bool implicit;  // true when it's an automatic move without player choice
-
-  friend ostream& operator<<(ostream& os, const Move& move);
-};
 
 class GameState {
 public:
@@ -75,9 +49,3 @@ public:
 };
 
 bool solve_game(const GameState &game, vector<Move> &moves_to_win, unordered_set<GameState> &visited_states, int depth);
-
-const Card no_card(0, 0);
-const Card blank_card(-1, 0);
-const Card red_dragon(0, -1);
-const Card green_dragon(1, -1);
-const Card blue_dragon(2, -1);

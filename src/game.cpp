@@ -1,5 +1,4 @@
 #include "game.h"
-#include "colors.h"
 
 // state = init_state()
 // moves_to_win = []
@@ -29,53 +28,6 @@
 //
 //   return lose  // no win from here
 
-
-// no card with space
-// normal cards with colored number
-// dragon cards with inverse @
-// blank card with white #`
-ostream& operator<<(ostream& os, const Card& card) {
-  if (card.suit < 0) {
-    // blank card
-    os << "#";
-  } else if (card.value == 0) {
-    // no card
-    os << " ";
-  } else if (card.value < 0) {
-    // dragon
-    switch (card.suit) {
-      case 0:
-        os << inverse_red;
-      break;
-
-      case 1:
-        os << inverse_green;
-      break;
-
-      case 2:
-        os << inverse_blue;
-      break;
-    }
-    os << "@" << reset;
-  } else {
-    // normal card
-    switch (card.suit) {
-      case 0:
-        os << red;
-      break;
-
-      case 1:
-        os << green;
-      break;
-
-      case 2:
-        os << blue;
-      break;
-    }
-    os << card.value << reset;
-  }
-  return os;
-}
 
 ostream& operator<<(ostream& os, const GameState& game) {
   // +--------+
@@ -127,40 +79,6 @@ ostream& operator<<(ostream& os, const GameState& game) {
   return os;
 }
 
-ostream& operator<<(ostream& os, const Move& move) {
-  os << "<move " << move.from << "," << move.to;
-  if (move.size != 1)
-    os << " (" << move.size << ")";
-  if (move.implicit)
-    os << " implicit";
-  os << ">";
-  return os;
-}
-
-Card::Card() : suit(0), value(0) {
-}
-
-Card::Card(int suit, int value) : suit(suit), value(value) {
-}
-
-bool Card::present() const {
-  return (suit != 0) || (value != 0);
-}
-
-bool Card::dragon() const {
-  return suit >= 0 && value < 0;
-}
-
-bool Card::blank() const {
-  return suit < 0;
-}
-
-bool Card::normal() const {
-  return suit >= 0 && value >= 0;
-}
-
-Move::Move(int from, int to, int size, bool implicit) : from(from), to(to), size(size), implicit(implicit) {
-}
 
 // provide specialization of std::hash<GameState>()
 size_t std::hash<GameState>::operator()(const GameState &g) const
@@ -183,16 +101,6 @@ size_t std::hash<GameState>::operator()(const GameState &g) const
   }
 
   return result ^ (g.blank_done << 1);
-}
-
-bool operator==(const Card &c1, const Card &c2)
-{
-  return (c1.suit == c2.suit) && (c1.value == c2.value);
-}
-
-bool operator!=(const Card &c1, const Card &c2)
-{
-    return !(c1 == c2);
 }
 
 

@@ -1,10 +1,4 @@
-#include <iostream>
-#include <vector>
-#include <unordered_set>
-
 #include "game.h"
-
-using namespace std;
 
 void init_random_seed() {
   struct timespec tm;
