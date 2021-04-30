@@ -493,14 +493,14 @@ bool GameState::normalize() {
   }
 
   // sort slot and pile indexes
-  sort(slot_indexes, slot_indexes + num_suits,
+  sort(begin(slot_indexes), end(slot_indexes),
       [&] (int l, int r) {
     auto slot_l = slots[l];
     auto slot_r = slots[r];
     return slot_l < slot_r;
   });
 
-  sort(pile_indexes, pile_indexes + num_piles,
+  sort(begin(pile_indexes), end(pile_indexes),
       [&] (int l, int r) {
     if (pile_sizes[l] != pile_sizes[r]) return (pile_sizes[l] < pile_sizes[r]);
     auto top_l = this->top_card_of_pile(l);
@@ -617,16 +617,6 @@ bool solve_game(const GameState &game, vector<Move> &moves_to_win, unordered_set
     // Make the move on a copy of the game state
     GameState next_state = game;
     next_state.make_move(move);
-
-    for (int i=0; i < num_piles; i++) {
-      if (next_state.pile_sizes[i] < 0) {
-        cout << "BAD STATE   " << visited_states.size() << "," << depth << endl;
-        cout << game << endl;
-        cout << move << endl;
-        cout << next_state << endl;
-        cout << endl;
-      }
-    }
 
     // Recursively check the state after making this move
     bool wins = solve_game(next_state, moves_to_win, visited_states, depth+1);
