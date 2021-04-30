@@ -7,8 +7,6 @@
 #include "card.h"
 #include "move.h"
 
-using namespace std;
-
 const int num_suits = 3;
 const int num_piles = 8;
 const int max_value = 9;
@@ -40,7 +38,7 @@ public:
 
   static GameState create_random();
 
-  friend ostream& operator<<(ostream &os, const GameState &game);
+  friend std::ostream& operator<<(std::ostream &os, const GameState &game);
   friend bool operator==(const GameState &g1, const GameState &g2);
   friend bool operator!=(const GameState &g1, const GameState &g2);
 };
@@ -50,4 +48,4 @@ public:
   size_t operator()(const GameState &g) const;
 };
 
-bool solve_game(const GameState &game, vector<Move> &moves_to_win, unordered_set<GameState> &visited_states, int depth);
+bool solve_game(const GameState &game, std::vector<Move> &moves_to_win, std::unordered_set<GameState> &visited_states, int depth);

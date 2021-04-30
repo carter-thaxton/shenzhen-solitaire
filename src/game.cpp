@@ -1,6 +1,8 @@
 #include "game.h"
 #include <algorithm>
 
+using namespace std;
+
 // state = init_state()
 // moves_to_win = []
 // visited_states = {}

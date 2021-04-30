@@ -1,5 +1,7 @@
 #include "game.h"
 
+using namespace std;
+
 void init_random_seed() {
   struct timespec tm;
   clock_gettime(CLOCK_REALTIME, &tm);

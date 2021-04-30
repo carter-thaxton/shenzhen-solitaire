@@ -1,6 +1,8 @@
 #include "card.h"
 #include "colors.h"
 
+using namespace std;
+
 Card::Card() : suit(0), value(0) {
 }
 

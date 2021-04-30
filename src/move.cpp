@@ -1,5 +1,7 @@
 #include "move.h"
 
+using namespace std;
+
 Move::Move(int from, int to, int size, bool implicit) : from(from), to(to), size(size), implicit(implicit) {
 }
 

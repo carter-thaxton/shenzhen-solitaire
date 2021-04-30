@@ -2,8 +2,6 @@
 
 #include <iostream>
 
-using namespace std;
-
 class Card {
 public:
   Card();
@@ -18,7 +16,7 @@ public:
   bool blank() const;
   bool normal() const;
 
-  friend ostream& operator<<(ostream& os, const Card& card);
+  friend std::ostream& operator<<(std::ostream& os, const Card& card);
   friend bool operator==(const Card &c1, const Card &c2);
   friend bool operator!=(const Card &c1, const Card &c2);
   friend bool operator<(const Card &c1, const Card &c2);
