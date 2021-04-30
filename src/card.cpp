@@ -12,15 +12,19 @@ bool Card::present() const {
 }
 
 bool Card::dragon() const {
-  return suit >= 0 && value < 0;
+  return (suit >= 0) && (value < 0);
+}
+
+bool Card::dragon_done() const {
+  return (suit >= 0) && (value < -1);
 }
 
 bool Card::blank() const {
-  return suit < 0;
+  return (suit < 0);
 }
 
 bool Card::normal() const {
-  return suit >= 0 && value >= 0;
+  return (suit >= 0) && (value >= 0);
 }
 
 bool operator==(const Card &c1, const Card &c2)
@@ -31,6 +35,12 @@ bool operator==(const Card &c1, const Card &c2)
 bool operator!=(const Card &c1, const Card &c2)
 {
     return !(c1 == c2);
+}
+
+bool operator<(const Card &c1, const Card &c2)
+{
+    if (c1.value != c2.value) return (c1.value < c2.value);
+    return (c1.suit < c2.suit);
 }
 
 // no card with space

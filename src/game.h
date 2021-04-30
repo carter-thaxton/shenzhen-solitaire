@@ -24,6 +24,8 @@ class GameState {
 public:
   GameState();
 
+  bool normalize();                         // returns true if modified
+
   Card piles[num_piles][max_pile_size];
   int  pile_sizes[num_piles];
   Card slots[num_suits];                    // can contain any card.  (once dragons are moved to done, they will have a value of -4 instead of -1, to represent a stack of 4 dragons)

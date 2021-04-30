@@ -26,9 +26,11 @@ int main(int argc, const char *argv[]) {
   if (result) {
     // print moves in reverse
     for (auto i = moves_to_win.end(); i-- != moves_to_win.begin(); ) {
-      cout << *i << ", ";
+      auto move = *i;
+      cout << move << endl;
+      game.make_move(move);
+      cout << game << endl;
     }
-    cout << endl;
   } else {
     cout << "Unsolvable" << endl;
   }
