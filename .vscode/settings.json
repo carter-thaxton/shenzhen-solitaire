@@ -7,13 +7,5 @@
             "binaryArgs": []
         }
     ],
-    "files.associations": {
-        "unordered_set": "cpp",
-        "ostream": "cpp",
-        "string": "cpp",
-        "utility": "cpp",
-        "memory": "cpp"
-    },
-    "C_Cpp.errorSquiggles": "Enabled",
-    "C_Cpp.intelliSenseEngine": "Tag Parser"
+    "C_Cpp.errorSquiggles": "Enabled"
 }
