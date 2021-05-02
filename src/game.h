@@ -2,7 +2,6 @@
 
 #include <iostream>
 #include <vector>
-#include <unordered_set>
 
 #include "card.h"
 #include "move.h"
@@ -48,4 +47,4 @@ public:
   size_t operator()(const GameState &g) const;
 };
 
-bool solve_game(const GameState &game, std::vector<Move> &moves_to_win, std::unordered_set<GameState> &visited_states, int depth);
+bool solve_game(const GameState &game, std::vector<Move> &moves_to_win);

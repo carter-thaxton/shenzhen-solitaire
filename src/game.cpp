@@ -1,36 +1,9 @@
 #include "game.h"
+
+#include <unordered_set>
 #include <algorithm>
 
 using namespace std;
-
-// state = init_state()
-// moves_to_win = []
-// visited_states = {}
-// result = solve_game(state, moves_to_win, visited_states)
-// if result == win
-//   print moves_to_win in reverse
-// else
-//   print "unsolvable"
-
-// solve_game(state, moves_to_win, visited_states)
-//   if state is in winning position
-//     return win
-//
-//   if state in visited_states
-//     return lose  // already seen this state, would result in loop
-//   visited_states.insert(state)
-//
-//   for each legal next_move in state  // should prioritize any implicit moves first
-//     next_state = make_move(state, next_move)
-//     result = solve_game(next_state, moves_to_win, visited_states)
-//     if result == win
-//       moves_to_win.append(next_move)
-//       return win
-//     else if next_move is implicit
-//       return lose  // if we tried an implicit move that resulted in a loss, then this line can't be solved
-//
-//   return lose  // no win from here
-
 
 ostream& operator<<(ostream& os, const GameState& game) {
   // +--------+
@@ -541,7 +514,7 @@ bool GameState::normalize() {
   return changed;
 }
 
-bool solve_game(const GameState &game, vector<Move> &moves_to_win, unordered_set<GameState> &visited_states, int depth) {
+static bool solve_game_recursive(const GameState &game, vector<Move> &moves_to_win, unordered_set<GameState> &visited_states, int depth) {
   // Base case - we found a winning state!
   if (game.win())
     return true;
@@ -621,7 +594,7 @@ bool solve_game(const GameState &game, vector<Move> &moves_to_win, unordered_set
     next_state.make_move(move);
 
     // Recursively check the state after making this move
-    bool wins = solve_game(next_state, moves_to_win, visited_states, depth+1);
+    bool wins = solve_game_recursive(next_state, moves_to_win, visited_states, depth+1);
 
     if (wins) {
       // Found a winning line, append this move to the result as we unwind the stack
@@ -635,4 +608,9 @@ bool solve_game(const GameState &game, vector<Move> &moves_to_win, unordered_set
 
   // No more legal moves, or all legal moves from this state result in a loss
   return false;
+}
+
+bool solve_game(const GameState &game, std::vector<Move> &moves_to_win) {
+  unordered_set<GameState> visited_states;
+  return solve_game_recursive(game, moves_to_win, visited_states, 0);
 }
