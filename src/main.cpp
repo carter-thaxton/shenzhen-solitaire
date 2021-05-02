@@ -33,6 +33,7 @@ int main(int argc, const char *argv[]) {
       game.make_move(move);
       cout << game << endl;
     }
+    cout << "Solution has " << moves_to_win.size() << " moves" << endl;
   } else {
     cout << "Unsolvable" << endl;
   }
