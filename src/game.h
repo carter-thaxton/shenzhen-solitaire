@@ -16,6 +16,7 @@ const int init_pile_size = ((max_value * num_suits) + (num_dragons * num_suits) 
 const int max_pile_size = init_pile_size + (max_value - 2);
 const int move_to_done = -999;
 
+enum class WinResult { WIN, LOSE, LOOP, MAX };
 
 class GameState {
 public:
@@ -47,4 +48,5 @@ public:
   size_t operator()(const GameState &g) const;
 };
 
-bool solve_game(const GameState &game, std::vector<Move> &moves_to_win);
+bool solve_game_dfs(const GameState &game, std::vector<Move> &moves_to_win, int max_depth);
+bool solve_game_bfs(const GameState &game, std::vector<Move> &moves_to_win);

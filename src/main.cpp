@@ -13,14 +13,19 @@ int main(int argc, const char *argv[]) {
 //  srand(0);
   srand(0);
 
+  int max_depth = 400;
+  if (argc >= 1) {
+    max_depth = atoi(argv[1]);
+  }
+
   GameState game = GameState::create_random();
 
   // print game
   cout << game << endl;
 
-  // solve game recursively, using efficient set of visited_states to avoid looping
+  // solve game
   vector<Move> moves_to_win;
-  bool result = solve_game(game, moves_to_win);
+  bool result = solve_game_dfs(game, moves_to_win, max_depth);
 
   if (result) {
     // print moves in reverse

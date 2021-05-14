@@ -1,6 +1,9 @@
 #include "game.h"
+#include "magic_enum.hpp"
 
 #include <unordered_set>
+#include <vector>
+#include <queue>
 #include <algorithm>
 
 using namespace std;
@@ -121,6 +124,9 @@ GameState::GameState() {
 bool GameState::win() const {
   for (int s = 0; s < num_suits; s++) {
     if (done[s] != max_value) return false;
+  }
+  for (int s = 0; s < num_suits; s++) {
+    if (!slots[s].dragon_done()) return false;
   }
   if (blank_done != num_blanks) return false;
   return true;
@@ -514,33 +520,32 @@ bool GameState::normalize() {
   return changed;
 }
 
-static bool solve_game_recursive(const GameState &game, vector<Move> &moves_to_win, unordered_set<GameState> &visited_states, int depth) {
+static WinResult solve_game_recursive(const GameState &state, vector<Move> &moves_to_win, unordered_set<GameState> &visited_states, int depth, int max_states, int max_depth) {
   // Base case - we found a winning state!
-  if (game.win())
-    return true;
-
-  // Create a copy of the state, in normalized form
-  GameState state = game;
-  state.normalize();
-
-  // Check if we have already visited this normalized state, to avoid loops
-  if (visited_states.find(state) != visited_states.end()) {
-    return false;
-  }
-
-  visited_states.insert(state);
+  if (state.win())
+    return WinResult::WIN;
 
   // DEBUG: stop after N visits
-  if (visited_states.size() >= 10000000) {
-    //cout << "Max states reached: " << visited_states.size() << endl;
-    return false;
+  if (visited_states.size() >= max_states) {
+//    cout << "Max states reached: " << visited_states.size() << endl;
+    return WinResult::MAX;
   }
-  if (depth >= 500) {
-    //cout << "Max depth reached: " << depth << endl;
-    return false;
+  if (depth >= max_depth) {
+//    cout << "Max depth reached: " << depth << endl;
+    return WinResult::MAX;
   }
 
+  // Create a copy of the state, in normalized form
+  GameState normalized_state = state;
+  normalized_state.normalize();
 
+  // Check if we have already visited this normalized state, to avoid loops
+  if (visited_states.find(normalized_state) != visited_states.end()) {
+    return WinResult::LOOP;
+  }
+  visited_states.insert(normalized_state);
+
+  // Counters to loop through each next move
   bool implicit = true;
   int from = -num_suits;
   int to = move_to_done;
@@ -553,7 +558,7 @@ static bool solve_game_recursive(const GameState &game, vector<Move> &moves_to_w
     Move move(from, to, size, implicit);
 
     // Check if move is legal, and whether we should also check further stack sizes
-    auto [legal, try_next_size] = game.check_move(move);
+    auto [legal, try_next_size] = state.check_move(move);
 
     // Iterate through each move one at a time, first checking all implicit moves
     // from:  slots, piles
@@ -590,27 +595,163 @@ static bool solve_game_recursive(const GameState &game, vector<Move> &moves_to_w
     move_count++;
 
     // Make the move on a copy of the game state
-    GameState next_state = game;
+    GameState next_state = state;
     next_state.make_move(move);
 
     // Recursively check the state after making this move
-    bool wins = solve_game_recursive(next_state, moves_to_win, visited_states, depth+1);
+    WinResult result = solve_game_recursive(next_state, moves_to_win, visited_states, depth+1, max_states, max_depth);
 
-    if (wins) {
+    if (result == WinResult::WIN) {
       // Found a winning line, append this move to the result as we unwind the stack
       moves_to_win.push_back(move);
-      return true;
+
+      // Also remove all normalized states that were reached as part of a non-losing line,
+      // so that visited_states only contains states to ignore on future searches
+      visited_states.erase(normalized_state);
+
+      return result;
     } else if (implicit) {
-      // If we tried an implicit move that resulted in a loss, then this entire line can't be solved
-      return false;
+      // If we tried an implicit move that resulted in anything but a win, then this entire line can't be solved for the same reason
+
+      if (result != WinResult::LOSE) {
+        // Also remove all normalized states that were reached as part of a non-losing line,
+        // so that visited_states only contains states to ignore on future searches
+        visited_states.erase(normalized_state);
+      }
+
+      return result;
     }
   }
 
   // No more legal moves, or all legal moves from this state result in a loss
-  return false;
+  return WinResult::LOSE;
 }
 
-bool solve_game(const GameState &game, std::vector<Move> &moves_to_win) {
+bool solve_game_dfs(const GameState &game, std::vector<Move> &moves_to_win, int max_depth) {
   unordered_set<GameState> visited_states;
-  return solve_game_recursive(game, moves_to_win, visited_states, 0);
+  WinResult result = solve_game_recursive(game, moves_to_win, visited_states, 0, 10000000, max_depth);
+  return result == WinResult::WIN;
+}
+
+bool solve_game_bfs(const GameState &game, vector<Move> &moves_to_win) {
+  unordered_set<GameState> visited_states;
+  vector<tuple<Move, int, int>> all_moves;
+  queue<pair<GameState, int>> states_to_visit;
+  unordered_set<GameState> lookahead_states;
+
+  states_to_visit.emplace(game, -1);
+
+  int prev_depth = -1;
+  int max_depth = 500;
+
+  while (!states_to_visit.empty()) {
+    auto [state, prev_move_index] = states_to_visit.front();
+    states_to_visit.pop();
+
+    // Get depth of game to reach this state, which is stored along with each move
+    int depth = (prev_move_index < 0) ? 0 : get<2>(all_moves[prev_move_index]);
+
+    // Print some statistics each time we reach a new depth
+    if (depth != prev_depth) {
+      cout << "depth: " << depth << "/" << max_depth << "  visited: " << visited_states.size() << "  moves: " << all_moves.size() << "  to_visit: " << states_to_visit.size() << endl;
+      prev_depth = depth;
+    }
+
+    // Every so often, check if this state can be solved at all, using depth-first-search
+    if (depth % 3 == 0) {
+      vector<Move> lookahead_moves;
+      WinResult result = solve_game_recursive(state, lookahead_moves, lookahead_states, depth, 10000000, max_depth);
+      if (result == WinResult::WIN) {
+        cout << "YES - solution with " << lookahead_moves.size() << " moves, lookahead_states: " << lookahead_states.size() << endl;
+        max_depth = lookahead_moves.size();
+      } else {
+        cout << "NO - lookahead_states: " << lookahead_states.size() << " result: " << magic_enum::enum_name(result) << endl;
+        continue;
+      }
+    }
+
+    // Counters to loop through each next move
+    bool implicit = true;
+    int from = -num_suits;
+    int to = move_to_done;
+    int size = 1;
+
+    // Try each next move in turn
+    while (1) {
+      Move move(from, to, size, implicit);
+
+      // Check if move is legal, and whether we should also check further stack sizes
+      auto [legal, try_next_size] = state.check_move(move);
+
+      // Iterate through each move one at a time, first checking all implicit moves
+      // from:  slots, piles
+      // to:    done, piles, slots
+      if (try_next_size) {
+        size += 1;
+      } else if (to == move_to_done) {
+        to = 0;
+        size = 1;
+      } else if (to >= num_piles-1) {
+        to = -num_suits;
+        size = 1;
+      } else if (to == -1) {
+        from += 1;
+        to = move_to_done;
+        size = 1;
+        if (from >= num_piles) {
+          if (implicit) {
+            implicit = false;
+            from = -num_suits;
+          }
+          else
+            break;  // done looping
+        }
+      } else {
+        to += 1;
+        size = 1;
+      }
+
+      // Only proceed with legal moves
+      if (!legal)
+        continue;
+
+      // Make the move on a copy of the game state
+      GameState next_state = state;
+      next_state.make_move(move);
+
+      // Base case - we found a winning state!
+      if (next_state.win()) {
+        // collect winning moves to get to this state
+        moves_to_win.push_back(move);
+
+        int i = prev_move_index;
+        while (i >= 0) {
+          auto [prev_move, prev_index, depth] = all_moves[i];
+          moves_to_win.push_back(prev_move);
+          i = prev_index;
+        }
+        return true;
+      }
+
+      // Check if we have already visited this normalized state, to avoid loops
+      GameState normalized_state = next_state;
+      normalized_state.normalize();
+      if (visited_states.find(normalized_state) != visited_states.end()) {
+        continue;
+      }
+      visited_states.insert(normalized_state);
+
+      // Add the new state and the move it took to get here
+      int move_index = all_moves.size();
+      all_moves.emplace_back(move, prev_move_index, depth+1);
+      states_to_visit.emplace(next_state, move_index);
+
+      // Only add one legal implicit move from this state
+      if (implicit)
+        break;
+    }
+  }
+
+  // no solution found
+  return false;
 }
