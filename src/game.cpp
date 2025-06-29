@@ -182,9 +182,11 @@ GameState GameState::create_random() {
     int h2 = r2 / num_piles;
     int p2 = r2 % num_piles;
 
-    Card tmp = result.piles[p1][h1];
-    result.piles[p1][h1] = result.piles[p2][h2];
-    result.piles[p2][h2] = tmp;
+    Card& c1 = result.piles[p1][h1];
+    Card& c2 = result.piles[p2][h2];
+
+    if (c1.present() && c2.present())
+      std::swap(c1, c2);
   }
 
   return result;
@@ -579,8 +581,9 @@ static WinResult solve_game_recursive(const GameState& state, vector<Move>& move
           implicit = false;
           from = -num_suits;
         }
-        else
+        else {
           break;  // done looping
+        }
       }
     } else {
       to += 1;
