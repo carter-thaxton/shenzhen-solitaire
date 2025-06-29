@@ -1,21 +1,26 @@
 #include "game.h"
+#include "time.h"
 
 using namespace std;
 
-void init_random_seed() {
-  struct timespec tm;
-  clock_gettime(CLOCK_REALTIME, &tm);
-  srand((unsigned) tm.tv_nsec);
-}
-
 int main(int argc, const char *argv[]) {
-//  init_random_seed();
-//  srand(0);
-  srand(0);
+  if (argc < 2) {
+    cout << "Usage: solitaire <seed> [max_depth]" << endl;
+    cout << "  seed of 0 will choose randomly" << endl;
+    cout << "  max_depth defaults to 1000" << endl;
+    return 1;
+  }
 
-  int max_depth = 400;
-  if (argc > 1) {
-    max_depth = atoi(argv[1]);
+  int seed = atoi(argv[1]);
+  if (seed <= 0) {
+    srand(time(NULL));
+  } else {
+    srand(seed);
+  }
+
+  int max_depth = 1000;
+  if (argc > 2) {
+    max_depth = atoi(argv[2]);
   }
 
   GameState game = GameState::create_random();
