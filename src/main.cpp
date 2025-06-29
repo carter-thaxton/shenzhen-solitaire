@@ -14,7 +14,7 @@ int main(int argc, const char *argv[]) {
   srand(0);
 
   int max_depth = 400;
-  if (argc >= 1) {
+  if (argc > 1) {
     max_depth = atoi(argv[1]);
   }
 
