@@ -10,23 +10,23 @@ using namespace std;
 
 ostream& operator<<(ostream& os, const GameState& game) {
   // +--------+
-  os << "+"; for (int p=0; p < num_piles; p++) { os << "-"; } os << "+"; os << endl;
+  os << '+' << std::string(num_piles, '-') << '+' << endl;
 
-  os << "|";
+  os << '|';
   for (int i=num_suits-1; i >= 0; i--) {
     os << game.slots[i];
   }
 
-  os << "|";
+  os << '|';
   os << (game.blank_done ? blank_card : no_card);
 
   for (int i=0; i < num_suits; i++) {
     os << Card(i, game.done[i]);
   }
-  os << "|" << endl;
+  os << '|' << endl;
 
   // |--------|
-  os << "|"; for (int p=0; p < num_piles; p++) { os << "-"; } os << "|"; os << endl;
+  os << '|' << std::string(num_piles, '-') << '|' << endl;
 
   for (int h=0; h < max_pile_size; h++) {
     bool any = false;
@@ -37,15 +37,15 @@ ostream& operator<<(ostream& os, const GameState& game) {
     }
 
     if (any) {
-      os << "|";
+      os << '|';
       for (int p=0; p < num_piles; p++) {
         if (h < game.pile_sizes[p]) {
           os << game.piles[p][h];
         } else {
-          os << " ";
+          os << ' ';
         }
       }
-      os << "|" << endl;
+      os << '|' << endl;
     }
 
     if (!any)
@@ -53,14 +53,14 @@ ostream& operator<<(ostream& os, const GameState& game) {
   }
 
   // +--------+
-  os << "+"; for (int p=0; p < num_piles; p++) { os << "-"; } os << "+"; os << endl;
+  os << '+' << std::string(num_piles, '-') << '+' << endl;
 
   return os;
 }
 
 
 // provide specialization of std::hash<GameState>()
-size_t std::hash<GameState>::operator()(const GameState &g) const
+size_t std::hash<GameState>::operator()(const GameState& g) const
 {
   // computes the hash of the game state using a variant
   // of the Fowler-Noll-Vo hash function
@@ -83,7 +83,7 @@ size_t std::hash<GameState>::operator()(const GameState &g) const
 }
 
 
-bool operator==(const GameState &g1, const GameState &g2)
+bool operator==(const GameState& g1, const GameState& g2)
 {
   if (g1.blank_done != g2.blank_done)
     return false;
@@ -103,7 +103,7 @@ bool operator==(const GameState &g1, const GameState &g2)
   return true;
 }
 
-bool operator!=(const GameState &g1, const GameState &g2)
+bool operator!=(const GameState& g1, const GameState& g2)
 {
     return !(g1 == g2);
 }
@@ -190,7 +190,7 @@ GameState GameState::create_random() {
   return result;
 }
 
-static void move_dragons_to_done(GameState &game, int suit) {
+static void move_dragons_to_done(GameState& game, int suit) {
   // check if the destination slot is already in use
   // and swap slots to free up the slot corresponding to the dragon suit
   auto dest = game.slots[suit];
@@ -242,7 +242,7 @@ static void move_dragons_to_done(GameState &game, int suit) {
   game.slots[suit].value = -num_dragons;
 }
 
-void GameState::make_move(const Move &move) {
+void GameState::make_move(const Move& move) {
   int to = move.to;
   int from = move.from;
 
@@ -325,7 +325,7 @@ void GameState::make_move(const Move &move) {
   }
 }
 
-static bool can_move_dragon_to_done(const GameState &game, int suit) {
+static bool can_move_dragon_to_done(const GameState& game, int suit) {
   int dragons_showing = 0;
   int free_slots = 0;
 
@@ -349,7 +349,7 @@ static bool can_move_dragon_to_done(const GameState &game, int suit) {
   return (free_slots > 0) && (dragons_showing == num_dragons);
 }
 
-static bool can_move_normal_to_done(const GameState &game, int suit, int value, bool implicit) {
+static bool can_move_normal_to_done(const GameState& game, int suit, int value, bool implicit) {
   if (game.done[suit] != (value - 1))
     return false;
 
@@ -365,7 +365,7 @@ static bool can_move_normal_to_done(const GameState &game, int suit, int value, 
   return true;
 }
 
-static bool can_move_card_onto_card(const Card &card, const Card &onto_card) {
+static bool can_move_card_onto_card(const Card& card, const Card& onto_card) {
   if (!card.present()) return false;
 
   if (!onto_card.present()) {
@@ -381,7 +381,7 @@ static bool can_move_card_onto_card(const Card &card, const Card &onto_card) {
 }
 
 // return true if legal move, and also return whether to check higher stack sizes, when moving pile to pile
-std::tuple<bool,bool> GameState::check_move(const Move &move) const {
+std::tuple<bool,bool> GameState::check_move(const Move& move) const {
   int to = move.to;
   int from = move.from;
   int size = move.size;
@@ -463,7 +463,6 @@ std::tuple<bool,bool> GameState::check_move(const Move &move) const {
 }
 
 bool GameState::normalize() {
-
   int pile_indexes[num_piles];
   int slot_indexes[num_suits];
   for (int p=0; p < num_piles; p++) {
@@ -520,7 +519,7 @@ bool GameState::normalize() {
   return changed;
 }
 
-static WinResult solve_game_recursive(const GameState &state, vector<Move> &moves_to_win, unordered_set<GameState> &visited_states, int depth, int max_states, int max_depth) {
+static WinResult solve_game_recursive(const GameState& state, vector<Move>& moves_to_win, unordered_set<GameState>& visited_states, int depth, int max_states, int max_depth) {
   // Base case - we found a winning state!
   if (state.win())
     return WinResult::WIN;
@@ -627,13 +626,13 @@ static WinResult solve_game_recursive(const GameState &state, vector<Move> &move
   return WinResult::LOSE;
 }
 
-bool solve_game_dfs(const GameState &game, std::vector<Move> &moves_to_win, int max_depth) {
+bool solve_game_dfs(const GameState& game, std::vector<Move>& moves_to_win, int max_depth) {
   unordered_set<GameState> visited_states;
   WinResult result = solve_game_recursive(game, moves_to_win, visited_states, 0, 10000000, max_depth);
   return result == WinResult::WIN;
 }
 
-bool solve_game_bfs(const GameState &game, vector<Move> &moves_to_win) {
+bool solve_game_bfs(const GameState& game, vector<Move>& moves_to_win) {
   unordered_set<GameState> visited_states;
   vector<tuple<Move, int, int>> all_moves;
   queue<pair<GameState, int>> states_to_visit;

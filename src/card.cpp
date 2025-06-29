@@ -29,17 +29,17 @@ bool Card::normal() const {
   return (suit >= 0) && (value >= 0);
 }
 
-bool operator==(const Card &c1, const Card &c2)
+bool operator==(const Card& c1, const Card& c2)
 {
   return (c1.suit == c2.suit) && (c1.value == c2.value);
 }
 
-bool operator!=(const Card &c1, const Card &c2)
+bool operator!=(const Card& c1, const Card& c2)
 {
     return !(c1 == c2);
 }
 
-bool operator<(const Card &c1, const Card &c2)
+bool operator<(const Card& c1, const Card& c2)
 {
     if (c1.value != c2.value) return (c1.value < c2.value);
     return (c1.suit < c2.suit);
@@ -52,10 +52,10 @@ bool operator<(const Card &c1, const Card &c2)
 ostream& operator<<(ostream& os, const Card& card) {
   if (card.suit < 0) {
     // blank card
-    os << "#";
+    os << '#';
   } else if (card.value == 0) {
     // no card
-    os << " ";
+    os << ' ';
   } else if (card.value < 0) {
     // dragon
     switch (card.suit) {
@@ -71,7 +71,7 @@ ostream& operator<<(ostream& os, const Card& card) {
         os << inverse_blue;
       break;
     }
-    os << "@" << reset;
+    os << '@' << reset;
   } else {
     // normal card
     switch (card.suit) {

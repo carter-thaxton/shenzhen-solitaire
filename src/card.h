@@ -17,9 +17,9 @@ public:
   bool normal() const;
 
   friend std::ostream& operator<<(std::ostream& os, const Card& card);
-  friend bool operator==(const Card &c1, const Card &c2);
-  friend bool operator!=(const Card &c1, const Card &c2);
-  friend bool operator<(const Card &c1, const Card &c2);
+  friend bool operator==(const Card& c1, const Card& c2);
+  friend bool operator!=(const Card& c1, const Card& c2);
+  friend bool operator<(const Card& c1, const Card& c2);
 };
 
 const Card no_card(0, 0);

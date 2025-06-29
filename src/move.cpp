@@ -6,11 +6,11 @@ Move::Move(int from, int to, int size, bool implicit) : from(from), to(to), size
 }
 
 ostream& operator<<(ostream& os, const Move& move) {
-  os << "<move " << move.from << "," << move.to;
+  os << "<move " << move.from << ',' << move.to;
   if (move.size != 1)
-    os << " (" << move.size << ")";
+    os << " (" << move.size << ')';
   if (move.implicit)
     os << " implicit";
-  os << ">";
+  os << '>';
   return os;
 }

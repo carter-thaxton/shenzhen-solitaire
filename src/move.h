@@ -4,7 +4,7 @@
 
 class Move {
 public:
-  Move(int from, int to, int size = 1, bool implicit = 1);
+  Move(int from, int to, int size = 1, bool implicit = true);
 
   int from;  // non-negative indicates a pile, negative indicates a slot
   int to;    // non-negative indicates a pile, negative indicates a slot, -999 indicates move to done

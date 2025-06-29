@@ -12,7 +12,7 @@ const int max_value = 9;
 const int num_dragons = 4;
 const int num_blanks = 1;
 
-const int init_pile_size = ((max_value * num_suits) + (num_dragons * num_suits) + num_blanks) / num_piles;
+const int init_pile_size = ((max_value * num_suits) + (num_dragons * num_suits) + num_blanks + (num_piles - 1)) / num_piles;
 const int max_pile_size = init_pile_size + (max_value - 2);
 const int move_to_done = -999;
 
@@ -31,22 +31,22 @@ public:
   int  blank_done;                          // count of blank cards moved to the blank slot (0 or 1)
 
   bool win() const;
-  std::tuple<bool,bool> check_move(const Move &move) const;
-  const Card &top_card_of_pile(int pile) const;
+  std::tuple<bool,bool> check_move(const Move& move) const;
+  const Card& top_card_of_pile(int pile) const;
 
-  void make_move(const Move &move);
+  void make_move(const Move& move);
 
   static GameState create_random();
 
-  friend std::ostream& operator<<(std::ostream &os, const GameState &game);
-  friend bool operator==(const GameState &g1, const GameState &g2);
-  friend bool operator!=(const GameState &g1, const GameState &g2);
+  friend std::ostream& operator<<(std::ostream& os, const GameState& game);
+  friend bool operator==(const GameState& g1, const GameState& g2);
+  friend bool operator!=(const GameState& g1, const GameState& g2);
 };
 
 template <> class std::hash<GameState> {
 public:
-  size_t operator()(const GameState &g) const;
+  size_t operator()(const GameState& g) const;
 };
 
-bool solve_game_dfs(const GameState &game, std::vector<Move> &moves_to_win, int max_depth);
-bool solve_game_bfs(const GameState &game, std::vector<Move> &moves_to_win);
+bool solve_game_dfs(const GameState& game, std::vector<Move>& moves_to_win, int max_depth);
+bool solve_game_bfs(const GameState& game, std::vector<Move>& moves_to_win);
